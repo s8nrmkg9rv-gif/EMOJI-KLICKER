@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#171717">
+  <meta name="description" content="Emoji Clicker">
+  <link rel="manifest" href="manifest.json">
+  <title>Emoji Clicker</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@600;800;900&display=swap');
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:Rubik,system-ui,sans-serif;
+      background:#fff;
+      color:#171717;
+    }
+
+    #app{
+      max-width:760px;
+      margin:auto;
+      padding:16px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:12px;
+    }
+
+    .card{
+      border:1px solid #e5e5e5;
+      border-radius:24px;
+      background:#fafafa;
+      padding:20px;
+    }
+
+    .muted{
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      color:#777;
+      letter-spacing:.1em;
+    }
+
+    .score{
+      font-size:clamp(52px,11vw,82px);
+      font-weight:900;
+      line-height:.9;
+      margin:10px 0;
+    }
+
+    .emoji{
+      font-size:48px;
+      margin:10px 0;
+    }
+
+    .phrase{
+      font-size:22px;
+      font-weight:900;
+    }
+
+    .bar{
+      height:9px;
+      background:#e9e9e9;
+      border-radius:99px;
+      overflow:hidden;
+      margin-top:16px;
+    }
+
+    .fill{
+      height:100%;
+      background:#171717;
+      width:0;
+      transition:.18s;
+    }
+
+    .tap{
+      width:100%;
+      min-height:145px;
+      margin:12px 0;
+      border:0;
+      border-radius:26px;
+      background:#171717;
+      color:#fff;
+      font:inherit;
+      font-size:42px;
+      font-weight:900;
+    }
+
+    .tap:active{
+      transform:scale(.975);
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:9px;
+    }
+
+    .stat{
+      border:1px solid #e5e5e5;
+      border-radius:17px;
+      padding:14px;
+      background:#fff;
+    }
+
+    .val{
+      font-size:21px;
+      font-weight:900;
+      margin-top:3px;
+    }
+
+    .shop{
+      margin-top:12px;
+    }
+
+    .shop h2{
+      margin:0 0 10px;
+    }
+
+    .upgrade{
+      width:100%;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      text-align:left;
+      border:1px solid #e5e5e5;
+      background:#fff;
+      border-radius:17px;
+      padding:14px;
+      margin-top:8px;
+      font:inherit;
+      min-height:62px;
+    }
+
+    .upgrade:disabled{
+      opacity:.42;
+    }
+
+    .u-title{
+      font-weight:900;
+    }
+
+    .u-sub{
+      font-size:12px;
+      color:#777;
+    }
+
+    .cost{
+      font-weight:900;
+    }
+
+    .reset{
+      width:100%;
+      margin-top:9px;
+      min-height:44px;
+      border:1px solid #e5e5e5;
+      background:#fff;
+      border-radius:14px;
+      font:inherit;
+      font-weight:800;
+    }
+
+    #install{
+      display:none;
+      width:100%;
+      margin-bottom:10px;
+      min-height:48px;
+      border:0;
+      border-radius:15px;
+      background:#171717;
+      color:#fff;
+      font:inherit;
+      font-weight:900;
+    }
+
+    @media(max-width:560px){
+      .grid{grid-template-columns:1fr}
+      .stats{grid-template-columns:1fr 1fr}
+      .stats .stat:last-child{grid-column:1/-1}
+    }
+  </style>
+</head>
+
+<body>
+
+<main id="app">
+
+  <button id="install">📲 Установить игру</button>
+
+  <div class="grid">
+
+    <section class="card">
+      <div class="muted">Кликов</div>
+      <div id="score" class="score">0</div>
+
+      <div class="muted">Прогресс</div>
+
+      <div class="bar">
+        <div id="fill" class="fill"></div>
+      </div>
+
+      <div id="prog" class="muted" style="margin-top:8px"></div>
+    </section>
+
+    <section class="card">
+      <div class="muted">Статус</div>
+      <div id="emoji" class="emoji">😴</div>
+      <div id="phrase" class="phrase">Разогреваем палец...</div>
+    </section>
+
+  </div>
+
+  <button id="tap" class="tap">КЛИКНИ</button>
+
+  <div class="stats">
+
+    <div class="stat">
+      <div class="muted">Уровень</div>
+      <div id="lvl" class="val">1</div>
+    </div>
+
+    <div class="stat">
+      <div class="muted">Серия</div>
+      <div id="streak" class="val">0 🔥</div>
+    </div>
+
+    <div class="stat">
+      <div class="muted">CPS</div>
+      <div id="cps" class="val">0</div>
+    </div>
+
+  </div>
+
+  <section class="card shop">
+
+    <h2>🛒 Улучшения</h2>
+
+    <button class="upgrade" id="power">
+      <span>
+        <span class="u-title">⚡ Сила клика</span><br>
+        <span class="u-sub">+1 за нажатие</span>
+      </span>
+      <span id="powerCost" class="cost"></span>
+    </button>
+
+    <button class="upgrade" id="auto">
+      <span>
+        <span class="u-title">🤖 Автокликер</span><br>
+        <span class="u-sub">+1 автоклик/сек</span>
+      </span>
+      <span id="autoCost" class="cost"></span>
+    </button>
+
+    <button class="upgrade" id="speed">
+      <span>
+        <span class="u-title">⚙️ Ускорение автокликера</span><br>
+        <span class="u-sub">−100 мс между автокликами</span>
+      </span>
+      <span id="speedCost" class="cost"></span>
+    </button>
+
+    <button class="upgrade" id="crit">
+      <span>
+        <span class="u-title">💥 Крит-шанс</span><br>
+        <span class="u-sub">+5% шанс ×5</span>
+      </span>
+      <span id="critCost" class="cost"></span>
+    </button>
+
+    <button id="reset" class="reset">
+      Сбросить прогресс
+    </button>
+
+  </section>
+
+</main>
+
+<script>
+(() => {
+
+  const $ = id => document.getElementById(id);
+
+  let S = {
+    score: +localStorage.ecScore || 0,
+    power: +localStorage.ecPower || 1,
+    auto: +localStorage.ecAuto || 0,
+    speed: +localStorage.ecSpeed || 0,
+    crit: +localStorage.ecCrit || 0,
+    streak: 0,
+    last: 0
+  };
+
+  const levels = [
+    [0,'😴','Разогреваем палец...'],
+    [10,'🙂','О, уже неплохо!'],
+    [50,'😎','Вот это темп.'],
+    [150,'🤩','Ты вошёл во вкус!'],
+    [500,'🚀','Космическая скорость.'],
+    [1500,'👑','Кликер преклоняется.'],
+    [5000,'🧠','Это уже искусство.'],
+    [20000,'🦾','Кнопка просит пощады.']
+  ];
+
+  const cost = (base, level) =>
+    Math.floor(base * Math.pow(1.65, level));
+
+  const interval = () =>
+    Math.max(100, 1000 - S.speed * 100);
+
+  function save(){
+    localStorage.ecScore = S.score;
+    localStorage.ecPower = S.power;
+    localStorage.ecAuto = S.auto;
+    localStorage.ecSpeed = S.speed;
+    localStorage.ecCrit = S.crit;
+  }
+
+  function render(){
+
+    let i = 0;
+
+    for(let n=0;n<levels.length;n++){
+      if(S.score >= levels[n][0]) i=n;
+    }
+
+    const level = levels[i];
+    const next = levels[i+1];
+
+    $('score').textContent =
+      Math.floor(S.score).toLocaleString('ru-RU');
+
+    $('emoji').textContent = level[1];
+    $('phrase').textContent = level[2];
+
+    $('lvl').textContent = i+1;
+    $('streak').textContent = S.streak + ' 🔥';
+
+    const cps =
+      S.auto * 1000 / interval();
+
+    $('cps').textContent =
+      cps.toFixed(1).replace('.',',');
+
+    if(next){
+
+      $('fill').style.width =
+        Math.min(
+          100,
+          (S.score-level[0]) /
+          (next[0]-level[0]) * 100
+        ) + '%';
+
+      $('prog').textContent =
+        Math.max(0,Math.ceil(next[0]-S.score)) +
+        ' до следующего уровня';
+
+    }else{
+
+      $('fill').style.width = '100%';
+      $('prog').textContent =
+        'Максимальный статус 🚀';
+
+    }
+
+    const pc = cost(25,S.power-1);
+    const ac = cost(100,S.auto);
+    const sc = cost(300,S.speed);
+    const cc = cost(250,S.crit);
+
+    $('powerCost').textContent =
+      pc.toLocaleString('ru-RU');
+
+    $('autoCost').textContent =
+      ac.toLocaleString('ru-RU');
+
+    $('speedCost').textContent =
+      sc.toLocaleString('ru-RU');
+
+    $('critCost').textContent =
+      cc.toLocaleString('ru-RU');
+
+    $('power').disabled = S.score < pc;
+    $('auto').disabled = S.score < ac;
+
+    $('speed').disabled =
+      S.score < sc ||
+      S.auto === 0 ||
+      S.speed >= 9;
+
+    $('crit').disabled =
+      S.score < cc ||
+      S.crit >= 19;
+  }
+
+  function buy(key,base,limit=999){
+
+    const level =
+      key === 'power'
+      ? S.power-1
+      : S[key];
+
+    const price = cost(base,level);
+
+    if(S.score >= price && S[key] < limit){
+
+      S.score -= price;
+      S[key]++;
+
+      save();
+      render();
+    }
+  }
+
+  $('tap').onclick = () => {
+
+    const now = Date.now();
+
+    S.streak =
+      now - S.last < 1400
+      ? S.streak + 1
+      : 1;
+
+    S.last = now;
+
+    let clicks = S.power;
+
+    if(Math.random() < S.crit * .05){
+      clicks *= 5;
+    }
+
+    S.score += clicks;
+
+    save();
+    render();
+  };
+
+  $('power').onclick =
+    () => buy('power',25);
+
+  $('auto').onclick =
+    () => buy('auto',100);
+
+  $('speed').onclick =
+    () => buy('speed',300,9);
+
+  $('crit').onclick =
+    () => buy('crit',250,19);
+
+  $('reset').onclick = () => {
+
+    if(confirm('Сбросить весь прогресс?')){
+
+      [
+        'Score',
+        'Power',
+        'Auto',
+        'Speed',
+        'Crit'
+      ].forEach(k =>
+        localStorage.removeItem('ec'+k)
+      );
+
+      location.reload();
+    }
+  };
+
+  let lastTick = performance.now();
+
+  function tick(now){
+
+    const iv = interval();
+
+    if(S.auto && now-lastTick >= iv){
+
+      const times =
+        Math.min(
+          10,
+          Math.floor((now-lastTick)/iv)
+        );
+
+      S.score += S.auto * times;
+
+      lastTick += iv * times;
+
+      save();
+      render();
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(tick);
+
+  render();
+
+  let deferredPrompt;
+
+  window.addEventListener(
+    'beforeinstallprompt',
+    event => {
+
+      event.preventDefault();
+
+      deferredPrompt = event;
+
+      $('install').style.display = 'block';
+    }
+  );
+
+  $('install').onclick = async () => {
+
+    if(deferredPrompt){
+
+      deferredPrompt.prompt();
+
+      deferredPrompt = null;
+
+      $('install').style.display = 'none';
+    }
+  };
+
+  if('serviceWorker' in navigator){
+
+    window.addEventListener(
+      'load',
+      () => navigator.serviceWorker.register('./sw.js')
+    );
+
+  }
+
+})();
+</script>
+
+</body>
+</html>
